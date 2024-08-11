@@ -56,13 +56,13 @@ PairMeasurements MeasurementManager::GetMeasurements() {
   PairMeasurements measurements;
 
   while (true) {
-
+    //有IMU信息就处理，完全没有IMU信息就只处理点云信息
     if (mm_config_.enable_imu) {
-
+      //buffer里没信息就返回空
       if (imu_buf_.empty() || compact_data_buf_.empty()) {
         return measurements;
       }
-
+      //这里是对齐IMU信息和CompactData信息
       if (imu_buf_.back()->header.stamp.toSec()
           <= compact_data_buf_.front()->header.stamp.toSec() + mm_config_.msg_time_delay) {
         //ROS_DEBUG("wait for imu, only should happen at the beginning");
@@ -76,16 +76,19 @@ PairMeasurements MeasurementManager::GetMeasurements() {
         compact_data_buf_.pop();
         continue;
       }
+      //保证IMU信息覆盖了CompactData的起始帧
+      //取出一帧点云信息
       CompactDataConstPtr compact_data_msg = compact_data_buf_.front();
       compact_data_buf_.pop();
-
+      //取出点云帧前所有imu信息
       vector<sensor_msgs::ImuConstPtr> imu_measurements;
       while (imu_buf_.front()->header.stamp.toSec()
           < compact_data_msg->header.stamp.toSec() + mm_config_.msg_time_delay) {
         imu_measurements.emplace_back(imu_buf_.front());
+        //pop掉
         imu_buf_.pop();
       }
-
+      //取点云帧后一个imu信息 不pop掉
       // NOTE: one message after laser odom msg
       imu_measurements.emplace_back(imu_buf_.front());
 

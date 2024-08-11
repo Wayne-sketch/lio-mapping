@@ -2668,6 +2668,7 @@ void Estimator::SlideWindow() { // NOTE: this function is only for the states an
 void Estimator::ProcessEstimation() {
 
   while (true) {
+    //MeasurementManager中 获取imu信息和CompactData信息
     PairMeasurements measurements;
     std::unique_lock<std::mutex> buf_lk(buf_mutex_);
     con_.wait(buf_lk, [&] {
